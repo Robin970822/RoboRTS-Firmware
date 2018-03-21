@@ -1,9 +1,3 @@
-------
-
-[TOC]
-
-------
-
 [中文文档](ch/readme.md)
 
 ## Protocol Specifications
@@ -27,54 +21,6 @@ Protocol data can be divided into two major categories in terms of communication
 2. Configuration data: structure configuration data such as the wheel track, wheel base and gimbal position of a robot on an upper layer, as well as both the run time status of an upper layer program, and underlying layer response levels;
 
 3. Forward data: user-customized data that must be forwarded to the Referee System from the underlying layer and finally displayed on the client side;
-
-### Functional Modules
-
-#### Manual mode:
-
-Allows basic controls in remote control and mouse & keyboard mode. If some auxiliary functions, such as buff and auxiliary launching, are enabled in Manual mode, upper layer protocol communication must be enabled to obtain related data from an upper layer PC to implement these functions.
-
-Some upper layer debug interfaces are provided in Manual mode to facilitate testing and verification when debugging upper layer PC programs.
-
-#### Full Auto mode:
-
-In this mode, a chassis, gimbal and launching mechanism are fully controlled by an upper layer PC, including controlling these actuating mechanisms in a specific physical unit and also mode switching of these actuating mechanisms.
-
-#### Introduction to operating gears:
-
-##### 1. Manual gear
-
-Control data, debug, and automatic gear isolation (place the driving lever to the upper right)
-
-Control with a remote controller: place the driving lever to upper right
-
-- Turn on/off a friction wheel
-- Single shot, automatic firing
-
-Control with a mouse & keyboard: (place the driving lever to left center, upper right)
-
-- Turn on/off a friction wheel
-- Single shot, automatic firing
-- Twist the waist to dodge
-
-##### 2. Debug gear
-
-Used during robot debugging (place the driving lever to right center)
-
-- Twist the waist (upper left)
-- Armor tracking, not with the chassis (left center)
-- Armor tracking, with the chassis (lower left)
-- A friction wheel inherits the status in manual or auto mode
-- Upper layer control of launching
-
-##### 3. Automatic gear
-
-Used in competition (place the driving lever to the lower right)
-
-- Full automatic control (3 mechanisms completely trust control from an upper layer except for when the upper layer encounters a fatal_error)
-
-
-
 
 ## Introduction to Operating Mode
 
@@ -104,9 +50,9 @@ typedef enum
 | GIMBAL_INIT              | Gimbal is being restored from the power off status |
 | GIMBAL_NO_ARTI_INPUT     | No manual control data input mode available |
 | GIMBAL_FOLLOW_ZGYRO      | The mode in which the gimbal follows the chassis |
-| **GIMBAL_TRACK_ARMOR**   | Gimbal tracks armor                      |
+| GIMBAL_TRACK_ARMOR       | Gimbal tracks armor, icra not use        |
 | **GIMBAL_PATROL_MODE**   | Patrol mode, the gimbal yaws periodically, pitch uncontrolled |
-| **GIMBAL_SHOOT_BUFF**    | Shooting buff mode                       |
+| GIMBAL_SHOOT_BUFF        | Shooting buff mode, icra not use         |
 | **GIMBAL_POSITION_MODE** | Gimbal position mode, angle between two axes controlled on an upper layer |
 
 ### Chassis
@@ -134,7 +80,7 @@ typedef enum
 | **AUTO_SEPARATE_GIMBAL** | The chassis is separated from the gimbal, and rotation and panning are controlled on an upper layer |
 | **AUTO_FOLLOW_GIMBAL**   | Automatically follow the gimbal; panning is controlled on an upper layer |
 
-### Launching Mechanism
+### Shoot
 
 ```c
 typedef enum
@@ -147,13 +93,13 @@ typedef enum
 } shoot_mode_e;
 ```
 
-| Launching Mechanism Mode | Function                                 |
-| ------------------------ | ---------------------------------------- |
-| SHOT_DISABLE             | Launching mechanism power off            |
-| REMOTE_CTRL_SHOT         | A remote control is used to control a launching mechanism |
-| KEYBOARD_CTRL_SHOT       | A keyboard is used to control a launching mechanism |
-| SEMIAUTO_CTRL_SHOT       | Single shot or automatic firing is controlled on an upper layer |
-| **AUTO_CTRL_SHOT**       | Friction wheel rune, speed, single shot and automatic firing are fully controlled on an upper layer |
+| Shooting Mechanism Mode | Function                                 |
+| ----------------------- | ---------------------------------------- |
+| SHOT_DISABLE            | Shooting mechanism power off             |
+| REMOTE_CTRL_SHOT        | A remote control is used to control a shooting mechanism |
+| KEYBOARD_CTRL_SHOT      | A keyboard is used to control a shooting mechanism |
+| SEMIAUTO_CTRL_SHOT      | Single shot or automatic firing is controlled on an upper layer |
+| **AUTO_CTRL_SHOT**      | Friction wheel rune, speed, single shot and automatic firing are fully controlled on an upper layer |
 
 
 
@@ -241,14 +187,14 @@ Data transmission direction and specific features of command codes are as follow
 | :----------- | :----------------------- | :--------------------------------------- | :--------------------------------------- |
 | 0x0001       | Main control module > PC | Robot status in competition              | Referee System 10 Hz                     |
 | 0x0002       | Main control module > PC | Real-time damage data                    | Transmitted when hit                     |
-| 0x0003       | Main control module > PC | Real-time launching data                 | Referee system                           |
+| 0x0003       | Main control module > PC | Real-time shooting data                  | Referee system                           |
 | 0x0005       | Main control module > PC | Field interaction data                   | Transmitted when an IC card is detected  |
 | 0x0006       | Main control module > PC | Competition result data                  | Transmitted when competition ends        |
 | 0x0007       | Main control module > PC | Obtain buff data                         | Referee System                           |
 |              |                          |                                          |                                          |
 | 0x0010       | Main control module > PC | Robot chassis-related information        | Fixed 50Hz                               |
 | 0x0011       | Main control module > PC | Robot gimbal-related information         | Fixed 50Hz                               |
-| 0x0012       | Main control module > PC | Robot launching task information         | Fixed 50Hz                               |
+| 0x0012       | Main control module > PC | Robot shooting task information          | Fixed 50Hz                               |
 | 0x0013       | Main control module > PC | Robot chassis fault information          | Fixed 50Hz                               |
 | 0x0014       | Main control module > PC | Robot structure configuration status feedback | Fixed 50Hz                               |
 | 0x0015       | Main control module > PC | Robot gimbal calibration feedback        | Transmitted once when valid calibration information is received |
@@ -257,7 +203,7 @@ Data transmission direction and specific features of command codes are as follow
 |              |                          |                                          |                                          |
 | 0x00A0       | PC > main control module | Gimbal control information               | Fixed 50Hz                               |
 | 0x00A1       | PC > main control module | Chassis control information              | Fixed 50Hz                               |
-| 0x00A2       | PC > main control module | Launching mechanism control information  | Fixed 50Hz                               |
+| 0x00A2       | PC > main control module | Shooting mechanism control information   | Fixed 50Hz                               |
 | 0x00A3       | PC > main control module | Warning level when a PC encounters a runtime error | Transmitted if an error occurs           |
 | 0x00A4       | PC > main control module | Robot structure configuration information | Generally during a period of time before power on |
 | 0x00A5       | PC > main control module | Gimbal calibration information           | Transmitted when Gimbal calibration is required |
@@ -377,29 +323,29 @@ typedef __packed struct
 | hurt_type (HP deduction type)            | 4-7 bits: type of HP changes             |
 |                                          | 0x0: armor damage (attack received)      |
 |                                          | 0x1: module offline                      |
-|                                          | 0x2: projectile exceeds launching speed limit |
-|                                          | 0x3: projectile exceeds launching rate limit |
+|                                          | 0x2: projectile exceeds shooting speed limit |
+|                                          | 0x3: projectile exceeds shooting rate limit |
 
-##### 0x0003 real-time launching
+##### 0x0003 real-time shooting
 
-Corresponds to the data structure real_shoot_data_t (real-time launching information)
+Corresponds to the data structure real_shoot_data_t (real-time shooting information)
 
 ```c
 typedef __packed struct
 {
-  uint8_t reserved;
+  uint8_t reserved1;
   uint8_t bullet_freq;
   float   bullet_speed;
-  float   reserved;
+  float   reserved2;
 } real_shoot_data_t;
 ```
 
 | Data         | Description                |
 | ------------ | -------------------------- |
-| reserved     | Reserved                   |
-| bullet_freq  | projectile launching rate  |
-| bullet_speed | projectile launching speed |
-| reserved     | Reserved                   |
+| reserved1    | Reserved                   |
+| bullet_freq  | bullets shooting frequency |
+| bullet_speed | bullets shooting speed     |
+| reserved2    | Reserved                   |
 
 ##### 0x0005 field interaction
 
@@ -521,9 +467,9 @@ typedef __packed struct
 | pit_palstance      | Angular velocity of the pitch axis (degree/s) |
 | yaw_palstance      | Angular velocity of the yaw axis (degree/s) |
 
-##### 0x0012 launching mechanism
+##### 0x0012 shoot information
 
-Corresponds to the data structure shoot_info_t (launching mechanism status information)
+Corresponds to the data structure shoot_info_t (shooting mechanism status information)
 
 ```c
 typedef __packed struct
@@ -778,17 +724,17 @@ typedef __packed struct
 | yaw_ref      | The target angle of the yaw axis relative to the midpoint |
 | visual_valid | A significance bit of visual information used to check whether the gimbal control data at that moment is trustworthy |
 
-##### 0x00A2 launching mechanism control
+##### 0x00A2 shoot control
 
-Corresponds to the data structure shoot_ctrl_t (launching mechanism control information)
+Corresponds to the data structure shoot_ctrl_t (shooting mechanism control information)
 
 ```C
 typedef __packed struct
 {
-  uint8_t shoot_cmd;      /* single shoot command */
-  uint8_t c_shoot_cmd;    /* continuous shoot command */
-  uint8_t fric_wheel_run; /* friction run or not */
-  uint8_t fric_wheel_spd; /* fricrion wheel speed */
+  uint8_t  shoot_cmd;      /* single shoot command */
+  uint8_t  c_shoot_cmd;    /* continuous shoot command */
+  uint8_t  fric_wheel_run; /* friction run or not */
+  uint16_t fric_wheel_spd; /* fricrion wheel speed */
 } shoot_ctrl_t;
 ```
 
@@ -797,7 +743,7 @@ typedef __packed struct
 | shoot_cmd      | Single shot command                      |
 | c_shoot_cmd    | Automatic firing command                 |
 | fric_wheel_run | Turn on/off a friction wheel, 0: off, 1: on |
-| fric_wheel_spd | Speed of a friction wheel, ranging from 0 to 100 |
+| fric_wheel_spd | Speed of a friction wheel, ranging from 1000 to 2000 |
 
 ##### 0x00A3 global error
 

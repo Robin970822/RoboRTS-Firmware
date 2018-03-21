@@ -42,7 +42,6 @@
 #include "bsp_imu.h"
 #include "calibrate.h"
 #include "protocol.h"
-#include "led.h"
 #include "string.h"
 #include "math.h"
 #include "sys_config.h"
@@ -54,7 +53,7 @@ void get_chassis_info(void)
   /* get chassis wheel speed */
   for (uint8_t i = 0; i < 4; i++)
   {
-    chassis.wheel_speed_fdb[i] = moto_chassis[i].speed_rpm;
+    chassis.wheel_spd_fdb[i] = moto_chassis[i].speed_rpm;
   }
 
   /* get remote and keyboard chassis control information */
@@ -67,15 +66,15 @@ void get_chassis_info(void)
 
 static void get_structure_param(void)
 {
-  if ((pc_rece_mesg.structure_data.chassis_config == CUSTOM_CONFIG)
-   && (pc_rece_mesg.structure_data.wheel_perimeter != 0)
-   && (pc_rece_mesg.structure_data.wheel_base      != 0)
-   && (pc_rece_mesg.structure_data.wheel_track     != 0))
+  if ((pc_recv_mesg.structure_data.chassis_config == CUSTOM_CONFIG)
+   && (pc_recv_mesg.structure_data.wheel_perimeter != 0)
+   && (pc_recv_mesg.structure_data.wheel_base      != 0)
+   && (pc_recv_mesg.structure_data.wheel_track     != 0))
   {
     glb_struct.chassis_config  = CUSTOM_CONFIG;
-    glb_struct.wheel_perimeter = pc_rece_mesg.structure_data.wheel_perimeter;
-    glb_struct.wheel_base      = pc_rece_mesg.structure_data.wheel_base;
-    glb_struct.wheel_track     = pc_rece_mesg.structure_data.wheel_track;
+    glb_struct.wheel_perimeter = pc_recv_mesg.structure_data.wheel_perimeter;
+    glb_struct.wheel_base      = pc_recv_mesg.structure_data.wheel_base;
+    glb_struct.wheel_track     = pc_recv_mesg.structure_data.wheel_track;
   }
   else
   {
@@ -85,13 +84,13 @@ static void get_structure_param(void)
     glb_struct.wheel_track     = WHEELTRACK;
   }
 
-  if ((pc_rece_mesg.structure_data.gimbal_config == CUSTOM_CONFIG)
-   && (abs(pc_rece_mesg.structure_data.gimbal_x_offset) < pc_rece_mesg.structure_data.wheel_base/2)
-   && (abs(pc_rece_mesg.structure_data.gimbal_y_offset) < pc_rece_mesg.structure_data.wheel_track/2))
+  if ((pc_recv_mesg.structure_data.gimbal_config == CUSTOM_CONFIG)
+   && (abs(pc_recv_mesg.structure_data.gimbal_x_offset) < pc_recv_mesg.structure_data.wheel_base/2)
+   && (abs(pc_recv_mesg.structure_data.gimbal_y_offset) < pc_recv_mesg.structure_data.wheel_track/2))
   {
     glb_struct.gimbal_config   = CUSTOM_CONFIG;
-    glb_struct.gimbal_x_offset = pc_rece_mesg.structure_data.gimbal_x_offset;
-    glb_struct.gimbal_y_offset = pc_rece_mesg.structure_data.gimbal_y_offset;
+    glb_struct.gimbal_x_offset = pc_recv_mesg.structure_data.gimbal_x_offset;
+    glb_struct.gimbal_y_offset = pc_recv_mesg.structure_data.gimbal_y_offset;
   }
   else
   {
@@ -101,45 +100,45 @@ static void get_structure_param(void)
   }
 }
 
-int speed_debug = 1150;
+int speed_debug = 1230;
 void get_shoot_info(void)
 {
-  switch (shot.ctrl_mode)
+  switch (shoot.ctrl_mode)
   {
     case REMOTE_CTRL_SHOT:
     {
-      shot.fric_wheel_spd = speed_debug;//DEFAULT_FRIC_WHEEL_SPEED;
+      shoot.fric_wheel_spd = speed_debug;//DEFAULT_FRIC_WHEEL_SPEED;
       remote_ctrl_shoot_hook();
     }break;
     
     case KEYBOARD_CTRL_SHOT:
     {
-      shot.fric_wheel_spd = speed_debug;//DEFAULT_FRIC_WHEEL_SPEED;
+      shoot.fric_wheel_spd = speed_debug;//DEFAULT_FRIC_WHEEL_SPEED;
       remote_ctrl_shoot_hook();
       keyboard_shoot_hook();
     }break;
     
     case SEMIAUTO_CTRL_SHOT:
     {
-      //shot.fric_wheel_run = pc_rece_mesg.shoot_control_data.fric_wheel_run;
-      //shot.fric_wheel_spd = pc_rece_mesg.shoot_control_data.fric_wheel_spd;
-      shot.shoot_cmd      = pc_rece_mesg.shoot_control_data.shoot_cmd;
-      shot.c_shoot_cmd    = pc_rece_mesg.shoot_control_data.c_shoot_cmd;
+      //shoot.fric_wheel_run = pc_recv_mesg.shoot_control_data.fric_wheel_run;
+      //shoot.fric_wheel_spd = pc_recv_mesg.shoot_control_data.fric_wheel_spd;
+      shoot.shoot_cmd      = pc_recv_mesg.shoot_control_data.shoot_cmd;
+      shoot.c_shoot_cmd    = pc_recv_mesg.shoot_control_data.c_shoot_cmd;
     }break;
     
     case AUTO_CTRL_SHOT:
     {
-      shot.fric_wheel_run = pc_rece_mesg.shoot_control_data.fric_wheel_run;
-      shot.fric_wheel_spd = pc_rece_mesg.shoot_control_data.fric_wheel_spd;
-      shot.shoot_cmd      = pc_rece_mesg.shoot_control_data.shoot_cmd;
-      shot.c_shoot_cmd    = pc_rece_mesg.shoot_control_data.c_shoot_cmd;
+      shoot.fric_wheel_run = pc_recv_mesg.shoot_control_data.fric_wheel_run;
+      shoot.fric_wheel_spd = pc_recv_mesg.shoot_control_data.fric_wheel_spd;
+      shoot.shoot_cmd      = pc_recv_mesg.shoot_control_data.shoot_cmd;
+      shoot.c_shoot_cmd    = pc_recv_mesg.shoot_control_data.c_shoot_cmd;
     }break;
     
     default:
     {
-      shot.fric_wheel_run = 0;
-      shot.shoot_cmd      = 0;
-      shot.c_shoot_cmd    = 0;
+      shoot.fric_wheel_run = 0;
+      shoot.shoot_cmd      = 0;
+      shoot.c_shoot_cmd    = 0;
     }break;
   }
   /* get remote and keyboard friction wheel control information */
@@ -163,13 +162,13 @@ void chassis_position_measure(void)
   static double v_x,v_y,w_v;
   
   rotate_ratio_fr = ((glb_struct.wheel_base+glb_struct.wheel_track)/2.0f - \
-                      glb_struct.gimbal_x_offset + glb_struct.gimbal_y_offset);
+                      chassis.rotate_x_offset + chassis.rotate_y_offset);
   rotate_ratio_fl = ((glb_struct.wheel_base+glb_struct.wheel_track)/2.0f - \
-                      glb_struct.gimbal_x_offset - glb_struct.gimbal_y_offset);
+                      chassis.rotate_x_offset - chassis.rotate_y_offset);
   rotate_ratio_bl = ((glb_struct.wheel_base+glb_struct.wheel_track)/2.0f + \
-                      glb_struct.gimbal_x_offset - glb_struct.gimbal_y_offset);
+                      chassis.rotate_x_offset - chassis.rotate_y_offset);
   rotate_ratio_br = ((glb_struct.wheel_base+glb_struct.wheel_track)/2.0f + \
-                      glb_struct.gimbal_x_offset + glb_struct.gimbal_y_offset);
+                      chassis.rotate_x_offset + chassis.rotate_y_offset);
   rpm_ratio = glb_struct.wheel_perimeter*CHASSIS_DECELE_RATIO/(4*60.0f);
   ecd_ratio = glb_struct.wheel_perimeter*CHASSIS_DECELE_RATIO/(4*8192.0f);
   
@@ -197,9 +196,9 @@ void chassis_position_measure(void)
   
   angle_w += diff_d_w;
 
-  position_x_mm = (int16_t)(position_x*1000); //mm
-  position_y_mm = (int16_t)(position_y*1000); //mm
-  angle_deg     = (int16_t)(angle_w*RADIAN_COEF);//degree
+  position_x_mm = (int32_t)(position_x); //mm
+  position_y_mm = (int32_t)(position_y); //mm
+  angle_deg     = (int32_t)(angle_w*RADIAN_COEF);//degree
 
   v_x = rpm_ratio * ( - moto_chassis[0].speed_rpm + moto_chassis[1].speed_rpm \
                       + moto_chassis[2].speed_rpm - moto_chassis[3].speed_rpm);
@@ -210,8 +209,8 @@ void chassis_position_measure(void)
                       - moto_chassis[2].speed_rpm/rotate_ratio_bl \
                       - moto_chassis[3].speed_rpm/rotate_ratio_br);
 
-  v_x_mm = (int16_t)(v_x*1000);         //mm/s
-  v_y_mm = (int16_t)(v_y*1000);         //mm/s
+  v_x_mm = (int16_t)(v_x);         //mm/s
+  v_y_mm = (int16_t)(v_y);         //mm/s
   palstance_deg = (int16_t)(w_v*RADIAN_COEF);//degree/s
 }
 
@@ -223,8 +222,8 @@ void get_infantry_info(void)
   pc_send_mesg.chassis_information.gyro_angle     = chassis.gyro_angle;
   pc_send_mesg.chassis_information.ecd_palstance  = palstance_deg;
   pc_send_mesg.chassis_information.ecd_calc_angle = angle_deg;
-  pc_send_mesg.chassis_information.x_speed        = v_x_mm;
-  pc_send_mesg.chassis_information.y_speed        = v_y_mm;
+  pc_send_mesg.chassis_information.x_spd          = v_x_mm;
+  pc_send_mesg.chassis_information.y_spd          = v_y_mm;
   pc_send_mesg.chassis_information.x_position     = position_x_mm; //the absolute x axis position of chassis
   pc_send_mesg.chassis_information.y_position     = position_y_mm; //the absolute y axis position of chassis
   
@@ -238,9 +237,9 @@ void get_infantry_info(void)
   pc_send_mesg.gimbal_information.yaw_palstance      = gim.sensor.yaw_palstance; //dps
   
   /* shoot */
-  pc_send_mesg.shoot_task_information.remain_bullets  = shot.remain_bullets;
-  pc_send_mesg.shoot_task_information.shot_bullets    = shot.shot_bullets;
-  pc_send_mesg.shoot_task_information.fric_wheel_run  = shot.fric_wheel_run;
+  pc_send_mesg.shoot_task_information.remain_bullets  = shoot.remain_bullets;
+  pc_send_mesg.shoot_task_information.shoot_bullets    = shoot.shoot_bullets;
+  pc_send_mesg.shoot_task_information.fric_wheel_run  = shoot.fric_wheel_run;
 
   /* infantry error */
   pc_send_mesg.bottom_error_data.err_sta = DEVICE_NORMAL;
@@ -270,7 +269,7 @@ void get_infantry_info(void)
 
 void get_custom_data_info(void)
 {
-  //memcpy(&pc_rece_mesg.pc_to_server_data, &student_to_judgesys_data, sizeof(user_to_server_t));
+  //memcpy(&pc_recv_mesg.pc_to_server_data, &student_to_judgesys_data, sizeof(user_to_server_t));
 }
 
 
@@ -290,19 +289,12 @@ void send_gimbal_motor_ctrl_message(int16_t gimbal_cur[])
 
 
 
-uint8_t read_gimbal_offset(int32_t *pit_offset, int32_t *yaw_offset,
-                           int32_t *pit_buff_offset, int32_t *yaw_buff_offset)
+uint8_t read_gimbal_offset(int32_t *pit_offset, int32_t *yaw_offset)
 {
   if (cali_param.gim_cali_data[CALI_GIMBAL_CENTER].calied_done == CALIED_FLAG)
   {
     *pit_offset = cali_param.gim_cali_data[CALI_GIMBAL_CENTER].pitch_offset;
     *yaw_offset = cali_param.gim_cali_data[CALI_GIMBAL_CENTER].yaw_offset;
-    
-    if (cali_param.gim_cali_data[CALI_CAMERA_CENTER].calied_done == CALIED_FLAG)
-    {
-      *pit_buff_offset = cali_param.gim_cali_data[CALI_CAMERA_CENTER].pitch_offset;
-      *yaw_buff_offset = cali_param.gim_cali_data[CALI_CAMERA_CENTER].yaw_offset;
-    }
     
     return 1;
   }
@@ -320,8 +312,10 @@ void get_gimbal_info(void)
   gim.sensor.pit_relative_angle = pit_ecd_ratio*get_relative_pos(moto_pit.ecd, gim.pit_center_offset);
   
   /* get gimbal relative palstance */
+  //the Z axis(yaw) of gimbal coordinate system corresponds to the IMU Z axis
   gim.sensor.yaw_palstance = mpu_data.gz / 16.384f; //unit: dps
-  gim.sensor.pit_palstance = mpu_data.gx / 16.384f; //unit: dps
+  //the Y axis(pitch) of gimbal coordinate system corresponds to the IMU -X axis
+  gim.sensor.pit_palstance = -mpu_data.gx / 16.384f; //unit: dps
 
   /* get remote and keyboard gimbal control information */
   keyboard_gimbal_hook();
@@ -330,22 +324,22 @@ void get_gimbal_info(void)
   /* get gimbal calibration command */
   if (gim.ctrl_mode == GIMBAL_RELAX)
   {
-    gimbal_cali_msg_hook(pc_rece_mesg.cali_cmd_data.type, last_cali_type);
-    last_cali_type = pc_rece_mesg.cali_cmd_data.type;
+    gimbal_cali_msg_hook(pc_recv_mesg.cali_cmd_data.type, last_cali_type);
+    last_cali_type = pc_recv_mesg.cali_cmd_data.type;
   }
 
 }
 
 
-void no_cali_data_handle(void)
+void no_cali_data_handler(void)
 {
   static uint8_t last_cali_type;
   memset(&glb_cur, 0, sizeof(motor_current_t));
   
   while (1)
   {
-    gimbal_cali_msg_hook(pc_rece_mesg.cali_cmd_data.type, last_cali_type);
-    last_cali_type = pc_rece_mesg.cali_cmd_data.type;
+    gimbal_cali_msg_hook(pc_recv_mesg.cali_cmd_data.type, last_cali_type);
+    last_cali_type = pc_recv_mesg.cali_cmd_data.type;
     
     send_gimbal_motor_ctrl_message(glb_cur.gimbal_cur);
     send_chassis_motor_ctrl_message(glb_cur.chassis_cur);
@@ -357,9 +351,10 @@ void no_cali_data_handle(void)
 extern TaskHandle_t pc_unpack_task_t;
 static void gimbal_cali_msg_hook(uint8_t cur_type, uint8_t last_type)
 {
+  gimbal_cali_hook(moto_pit.ecd, moto_yaw.ecd);
+  
   if ((last_type == GIMBAL_CALI_START) && (cur_type == GIMBAL_CALI_END))
   {
-    LED_G_ON;
     cali_param.gim_cali_data[CALI_GIMBAL_CENTER].cali_cmd = 1;
     gimbal_cali_hook(moto_pit.ecd, moto_yaw.ecd);
     
@@ -369,10 +364,6 @@ static void gimbal_cali_msg_hook(uint8_t cur_type, uint8_t last_type)
     data_packet_pack(CALI_RESPONSE_ID, (uint8_t *)&pc_send_mesg.cali_response_data,
                      sizeof(cali_response_t), UP_REG_ID);
     osSignalSet(pc_unpack_task_t, PC_UART_TX_SIGNAL);
-  }
-  else
-  {
-    LED_G_OFF;
   }
   
   if ((last_type == CAMERA_CALI_START) && (cur_type == CAMERA_CALI_END))
@@ -497,11 +488,13 @@ void uart_dma_full_signal(UART_HandleTypeDef *huart)
 {
   if (huart == &JUDGE_HUART)
   {
-    osSignalSet(judge_unpack_task_t, JUDGE_DMA_FULL_SIGNAL);
+    /* remove DMA buffer full interrupt handler */
+    //osSignalSet(judge_unpack_task_t, JUDGE_DMA_FULL_SIGNAL);
   }
   else if (huart == &COMPUTER_HUART)
   {
-    osSignalSet(pc_unpack_task_t, PC_DMA_FULL_SIGNAL);
+    /* remove DMA buffer full interrupt handler */
+    //osSignalSet(pc_unpack_task_t, PC_DMA_FULL_SIGNAL);
   }
 }
 
